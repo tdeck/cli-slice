@@ -1,0 +1,48 @@
+#! /usr/bin/env perl
+use JSON;
+use Getopt::Long qw(GetOptionsFromString);
+
+my $LOGFILE = "$ENV{HOME}/.local/share/cura/5.6/cura.log";
+my $LOGMATCH = '\[EngineOutputThread\] UM.Backend.Backend._backendLog \[\d+\]: \[Backend\] ([\s\S]*)';
+my $SETTINGS_START = '\[info\] All settings:  (-s[\s\S]*)';
+my $SETTINGS_END = '\[info\] Progress: start accomplished in';
+
+my $fh;
+
+open $fh, $LOGFILE;
+
+my $settings_str;
+my $state = 'START';
+while (<$fh>) {
+    if (m/$LOGMATCH/) {
+        my $line = $1;
+        if ($state eq 'START') {
+            if ($line =~ /$SETTINGS_START/) {
+                $settings_str = $1;
+                $state = 'SETTINGS';
+            }
+        } elsif ($state eq 'SETTINGS') {
+            if ($line =~ /$SETTINGS_END/) {
+                $state = 'START';
+            } else {
+                $settings_str .= $line;
+            }
+        }
+    }
+}
+
+#print $settings_str;
+
+use Data::Dumper;
+
+my @settings;
+
+GetOptionsFromString($settings_str, 's=s' => \@settings);
+
+my %json_hash = ();
+foreach my $pair (@settings) {
+    $pair =~ s/^([^=]+)=//;
+    $json_hash{$1} = $pair;
+}
+
+print(to_json(\%json_hash, {pretty => 1}));
