@@ -1,0 +1,18 @@
+#! /bin/bash
+
+INFILE="${1:?Need input file}"
+OUTFILE="${2:-$INFILE.gcode}"
+SETTINGS_FILE=fast_strong.set
+#JSFILE=/usr/share/cura/resources/definitions/fdmprinter.def.json
+JSFILE=/usr/share/cura/resources/definitions/mp_mini_delta.def.json
+JSEXFILE=/usr/share/cura/resources/definitions/fdmextruder.def.json
+SLICER=CuraEngine
+#SLICER=./argv_test.pl  # TODO debug
+
+settings="$(cat $SETTINGS_FILE)"
+settings="${settings/-l \"0\"/-l "$INFILE"}"  # Cura will put '-l "0"' in the logs to tell CE to pull from a pipe
+
+# TODO this way of using eval makes the settings files potentially risky to use
+eval "$SLICER" slice -vv -p -j "$JSFILE" -j "$JSEXFILE" -o "$OUTFILE"  $settings
+
+#$SLICER slice -vv -p -l "$INFILE" -o "$OUTFILE" -s mesh_rotation_matrix="[[1,0,0], [0,1,0], [0,0,1]]"

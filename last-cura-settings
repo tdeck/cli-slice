@@ -31,18 +31,6 @@ while (<$fh>) {
     }
 }
 
-#print $settings_str;
+chomp $settings_str;
+print $settings_str;
 
-use Data::Dumper;
-
-my @settings;
-
-GetOptionsFromString($settings_str, 's=s' => \@settings);
-
-my %json_hash = ();
-foreach my $pair (@settings) {
-    $pair =~ s/^([^=]+)=//;
-    $json_hash{$1} = $pair;
-}
-
-print(to_json(\%json_hash, {pretty => 1}));
